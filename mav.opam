@@ -12,4 +12,5 @@ depends: [
   "jbuilder" {build}
   "containers"
   "ezjsonm"
+  "tyxml"
 ]

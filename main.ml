@@ -1,5 +1,3 @@
-open Containers
-
 type create_obj = {
   content : string;
   (* TODO: Use summary *)

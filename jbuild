@@ -3,4 +3,5 @@
 (executable
  ((name main)
   (public_name mav)
+  (flags (:standard -safe-string -w A-44-33-4 -open Containers))
   (libraries (containers ezjsonm ptime tyxml))))
