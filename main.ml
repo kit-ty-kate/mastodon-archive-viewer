@@ -2,7 +2,11 @@ open Containers
 
 type create_obj = {
   content : string;
-  (* TODO: Use the other fields *)
+  (* TODO: Use summary *)
+  (* TODO: Use sensitive *)
+  (* TODO: Use attachment *)
+  (* TODO: Use inReplyToAtomUri *)
+  (* TODO: Detect toot privacy *)
 }
 
 type announce_obj = {
@@ -47,6 +51,7 @@ let create_old_announce_obj l objectId =
   | ["noticeId"; id] -> get_gnu_social_url (get_first_cc l) id
   | _ -> assert false
 
+(* NOTE: Everything reached from this function is an heuristic and might break *)
 let create_announce_obj l s =
   match String.split_on_char ':' s with
   | ["tag"; _; objectId; _] -> {url = create_old_announce_obj l objectId}
@@ -77,7 +82,6 @@ let create_item l =
     | _ -> assert false
   in
   {typ; published}
-
 
 let parse_item = function
   | `O l -> create_item l
