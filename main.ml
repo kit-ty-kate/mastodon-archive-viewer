@@ -70,16 +70,24 @@ let parse = function
   | `A _ -> assert false
   | `O l -> parse_items (List.Assoc.get_exn ~eq:String.equal "orderedItems" l)
 
-let view_item {typ; published = (time, tz)} =
-  print_endline "------------------";
+let view_item {typ; published = (t, tz)} =
+  let open Tyxml.Html in
   let print_time = Ptime.pp_human ?tz_offset_s:tz () in
   match typ with
-  | Create {content} -> Format.printf "Create at %a: %s\n" print_time time content
-  | Announce {raw_object} -> Format.printf "Announce at %a: %s\n" print_time time raw_object
-  | Unknown -> Format.printf "Unknown at %a" print_time time
+  | Create {content} -> p [pcdata (Format.sprintf "Create at %a:" print_time t); Unsafe.data content]
+  | Announce {raw_object} -> p [pcdata (Format.sprintf "Announce at %a:" print_time t); pcdata raw_object]
+  | Unknown -> p [pcdata (Format.sprintf "Unknown at %a" print_time t)]
+
+let rec sep = function
+  | x::y::l -> x::Tyxml.Html.hr ()::sep (y::l)
+  | l -> l
 
 let view items =
-  List.iter view_item items
+  let open Tyxml.Html in
+  let charset = meta ~a:[a_charset "utf-8"] () in
+  let head = head (title (pcdata "mastodon-archive-viewer")) [charset] in
+  let html = html head (body (sep (List.map view_item items))) in
+  Format.printf "%a\n" (pp ()) html
 
 let () =
   match Sys.argv with
