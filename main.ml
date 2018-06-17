@@ -12,7 +12,6 @@ type announce_obj = {
 type typ =
   | Create of create_obj
   | Announce of announce_obj
-  | Unknown
 
 type item = {
   typ : typ;
@@ -55,7 +54,7 @@ let create_item l =
     match List.Assoc.get_exn ~eq:String.equal "type" l with
     | `String "Create" -> Create (create_create_obj l)
     | `String "Announce" -> Announce (create_announce_obj l)
-    | `String _ -> Unknown
+    | `String _ -> assert false
     | _ -> assert false
   in
   let published =
@@ -82,9 +81,8 @@ let view_item {typ; published = (t, tz)} =
   let open Tyxml.Html in
   let print_time = Ptime.pp_human ?tz_offset_s:tz () in
   match typ with
-  | Create {content} -> p [pcdata (Format.sprintf "Create at %a:" print_time t); Unsafe.data content]
-  | Announce {url} -> p [pcdata (Format.sprintf "Announce at %a:" print_time t); a ~a:[a_href url] [pcdata url]]
-  | Unknown -> p [pcdata (Format.sprintf "Unknown at %a" print_time t)]
+  | Create {content} -> p [pcdata (Format.sprintf "Tooted at %a:" print_time t); Unsafe.data content]
+  | Announce {url} -> p [pcdata (Format.sprintf "Boosted at %a: " print_time t); a ~a:[a_href url] [pcdata url]]
 
 let rec sep = function
   | x::y::l -> x::Tyxml.Html.hr ()::sep (y::l)
