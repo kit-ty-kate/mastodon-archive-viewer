@@ -31,17 +31,31 @@ let create_create_obj l =
   | `O l -> create_create_obj l
   | _ -> assert false
 
-let create_announce_obj s =
-  if String.length s <= 4 then begin
-    assert false;
-  end;
-  match String.sub s 0 4 with
-  | "tag:" -> {url = "???"} (* TODO: Handle this case *)
-  | _ -> {url = s}
+let get_first_cc l =
+  match List.Assoc.get_exn ~eq:String.equal "cc" l with
+  | `A (`String url :: _) -> url
+  | _ -> assert false
+
+let get_gnu_social_url url id =
+  match String.split_on_char '/' url with
+  | [scheme; ""; instance; "user"; _] -> scheme^"//"^instance^"/notice/"^id
+  | _ -> assert false
+
+let create_old_announce_obj l objectId =
+  match String.split_on_char '=' objectId with
+  | ["objectId"; id] -> get_first_cc l ^ "/statuses/" ^ id
+  | ["noticeId"; id] -> get_gnu_social_url (get_first_cc l) id
+  | _ -> assert false
+
+let create_announce_obj l s =
+  match String.split_on_char ':' s with
+  | ["tag"; _; objectId; _] -> {url = create_old_announce_obj l objectId}
+  | "http"::_ | "https"::_ -> {url = s}
+  | _ -> assert false
 
 let create_announce_obj l =
   match List.Assoc.get_exn ~eq:String.equal "object" l with
-  | `String s -> create_announce_obj s
+  | `String s -> create_announce_obj l s
   | _ -> assert false
 
 let parse_time s =
