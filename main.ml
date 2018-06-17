@@ -16,7 +16,7 @@ type typ =
 
 type item = {
   typ : typ;
-  published : string; (* TODO: Use some calendar lib *)
+  published : (Ptime.t * Ptime.tz_offset_s option);
 }
 
 let create_create_obj l =
@@ -37,6 +37,11 @@ let create_announce_obj l =
   | `String raw_object -> {raw_object}
   | _ -> assert false
 
+let parse_time s =
+  match Ptime.of_rfc3339 s with
+  | Ok (t, tz, _) -> (t, tz)
+  | Error _ -> assert false
+
 let create_item l =
   let typ =
     match List.Assoc.get_exn ~eq:String.equal "type" l with
@@ -47,7 +52,7 @@ let create_item l =
   in
   let published =
     match List.Assoc.get_exn ~eq:String.equal "published" l with
-    | `String s -> s
+    | `String s -> parse_time s
     | _ -> assert false
   in
   {typ; published}
@@ -65,12 +70,13 @@ let parse = function
   | `A _ -> assert false
   | `O l -> parse_items (List.Assoc.get_exn ~eq:String.equal "orderedItems" l)
 
-let view_item {typ; published} =
+let view_item {typ; published = (time, tz)} =
   print_endline "------------------";
+  let print_time = Ptime.pp_human ?tz_offset_s:tz () in
   match typ with
-  | Create {content} -> Printf.printf "Create at %s: %s\n" published content
-  | Announce {raw_object} -> Printf.printf "Announce at %s: %s\n" published raw_object
-  | Unknown -> print_endline "Unknown"
+  | Create {content} -> Format.printf "Create at %a: %s\n" print_time time content
+  | Announce {raw_object} -> Format.printf "Announce at %a: %s\n" print_time time raw_object
+  | Unknown -> Format.printf "Unknown at %a" print_time time
 
 let view items =
   List.iter view_item items

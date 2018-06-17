@@ -3,4 +3,4 @@
 (executable
  ((name main)
   (public_name mav)
-  (libraries (containers ezjsonm))))
+  (libraries (containers ezjsonm ptime))))
