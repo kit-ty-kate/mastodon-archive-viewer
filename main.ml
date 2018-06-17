@@ -6,7 +6,7 @@ type create_obj = {
 }
 
 type announce_obj = {
-  raw_object : string; (* TODO: To parse later *)
+  url : string;
 }
 
 type typ =
@@ -32,9 +32,17 @@ let create_create_obj l =
   | `O l -> create_create_obj l
   | _ -> assert false
 
+let create_announce_obj s =
+  if String.length s <= 4 then begin
+    assert false;
+  end;
+  match String.sub s 0 4 with
+  | "tag:" -> {url = "???"} (* TODO: Handle this case *)
+  | _ -> {url = s}
+
 let create_announce_obj l =
   match List.Assoc.get_exn ~eq:String.equal "object" l with
-  | `String raw_object -> {raw_object}
+  | `String s -> create_announce_obj s
   | _ -> assert false
 
 let parse_time s =
@@ -75,7 +83,7 @@ let view_item {typ; published = (t, tz)} =
   let print_time = Ptime.pp_human ?tz_offset_s:tz () in
   match typ with
   | Create {content} -> p [pcdata (Format.sprintf "Create at %a:" print_time t); Unsafe.data content]
-  | Announce {raw_object} -> p [pcdata (Format.sprintf "Announce at %a:" print_time t); pcdata raw_object]
+  | Announce {url} -> p [pcdata (Format.sprintf "Announce at %a:" print_time t); a ~a:[a_href url] [pcdata url]]
   | Unknown -> p [pcdata (Format.sprintf "Unknown at %a" print_time t)]
 
 let rec sep = function
