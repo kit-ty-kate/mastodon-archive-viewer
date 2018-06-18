@@ -1,6 +1,6 @@
 type create_obj = {
   content : string;
-  (* TODO: Use summary *)
+  summary : string option;
   (* TODO: Use sensitive *)
   (* TODO: Use attachment *)
   (* TODO: Use inReplyToAtomUri *)
@@ -26,7 +26,13 @@ let create_create_obj l =
     | `String s -> s
     | _ -> assert false
   in
-  {content}
+  let summary =
+    match List.Assoc.get_exn ~eq:String.equal "summary" l with
+    | `String s -> Some s
+    | `Null -> None
+    | _ -> assert false
+  in
+  {content; summary}
 
 let create_create_obj l =
   match List.Assoc.get_exn ~eq:String.equal "object" l with
@@ -96,8 +102,12 @@ let parse = function
 let view_item {typ; published = (t, tz)} =
   let open Tyxml.Html in
   let print_time = Ptime.pp_human ?tz_offset_s:tz () in
+  let print_summary = function
+    | Some summary -> span [br (); br (); b [pcdata "CW: "; pcdata summary]]
+    | None -> span []
+  in
   match typ with
-  | Create {content} -> p [pcdata (Format.sprintf "Tooted at %a:" print_time t); Unsafe.data content]
+  | Create {content; summary} -> p [pcdata (Format.sprintf "Tooted at %a:" print_time t); print_summary summary; Unsafe.data content]
   | Announce {url} -> p [pcdata (Format.sprintf "Boosted at %a: " print_time t); a ~a:[a_href url] [pcdata url]]
 
 let rec sep = function
