@@ -1,7 +1,7 @@
 type create_obj = {
   content : string;
   summary : string option;
-  (* TODO: Use sensitive *)
+  sensitive : bool;
   (* TODO: Use attachment *)
   (* TODO: Use inReplyToAtomUri *)
   (* TODO: Detect toot privacy *)
@@ -32,7 +32,12 @@ let create_create_obj l =
     | `Null -> None
     | _ -> assert false
   in
-  {content; summary}
+  let sensitive =
+    match List.Assoc.get_exn ~eq:String.equal "sensitive" l with
+    | `Bool b -> b
+    | _ -> assert false
+  in
+  {content; summary; sensitive}
 
 let create_create_obj l =
   match List.Assoc.get_exn ~eq:String.equal "object" l with
@@ -102,13 +107,30 @@ let parse = function
 let view_item {typ; published = (t, tz)} =
   let open Tyxml.Html in
   let print_time = Ptime.pp_human ?tz_offset_s:tz () in
-  let print_summary = function
-    | Some summary -> span [br (); br (); b [pcdata "CW: "; pcdata summary]]
-    | None -> span []
+  let print_summary acc ~sensitive = function
+    | Some summary -> tr [td [b [pcdata "CW: "; pcdata summary]]] :: acc
+    | None when sensitive -> tr [td [b [pcdata "Sensitive media"]]] :: acc
+    | None -> acc
+  in
+  let print_metadata ~sensitive ~summary =
+    let acc = print_summary [] ~sensitive summary in
+    if List.is_empty acc then
+      div []
+    else
+      table ~a:[a_style "border: 1px solid black;"] acc
   in
   match typ with
-  | Create {content; summary} -> p [pcdata (Format.sprintf "Tooted at %a:" print_time t); print_summary summary; Unsafe.data content]
-  | Announce {url} -> p [pcdata (Format.sprintf "Boosted at %a: " print_time t); a ~a:[a_href url] [pcdata url]]
+  | Create {content; summary; sensitive} ->
+      div [
+        pcdata (Format.sprintf "Tooted at %a:" print_time t);
+        print_metadata ~sensitive ~summary;
+        Unsafe.data content
+      ]
+  | Announce {url} ->
+      div [
+        pcdata (Format.sprintf "Boosted at %a: " print_time t);
+        a ~a:[a_href url] [pcdata url]
+      ]
 
 let rec sep = function
   | x::y::l -> x::Tyxml.Html.hr ()::sep (y::l)
