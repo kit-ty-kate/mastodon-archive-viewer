@@ -1,14 +1,20 @@
+type url = string
+
+type attachment =
+  | Video of (url * string option)
+  | Image of (url * string option)
+
 type create_obj = {
   content : string;
   summary : string option;
   sensitive : bool;
-  (* TODO: Use attachment *)
+  attachments : attachment list;
   (* TODO: Use inReplyToAtomUri *)
   (* TODO: Detect toot privacy *)
 }
 
 type announce_obj = {
-  url : string;
+  url : url;
 }
 
 type typ =
@@ -19,6 +25,32 @@ type item = {
   typ : typ;
   published : (Ptime.t * Ptime.tz_offset_s option);
 }
+
+let get_attachment mime l =
+  let url =
+    match List.Assoc.get_exn ~eq:String.equal "url" l with
+    | `String s -> s
+    | _ -> assert false
+  in
+  let name =
+    match List.Assoc.get_exn ~eq:String.equal "name" l with
+    | `String s -> Some s
+    | `Null -> None
+    | _ -> assert false
+  in
+  match String.split_on_char '/' mime with
+  | ["image"; _] -> Image (url, name)
+  | ["video"; _] -> Video (url, name)
+  | _ -> assert false
+
+let get_attachment l =
+  match List.Assoc.get_exn ~eq:String.equal "mediaType" l with
+  | `String mime -> get_attachment mime l
+  | _ -> assert false
+
+let get_attachment = function
+  | `O l -> get_attachment l
+  | _ -> assert false
 
 let create_create_obj l =
   let content =
@@ -37,7 +69,12 @@ let create_create_obj l =
     | `Bool b -> b
     | _ -> assert false
   in
-  {content; summary; sensitive}
+  let attachments =
+    match List.Assoc.get_exn ~eq:String.equal "attachment" l with
+    | `A l -> List.map get_attachment l
+    | _ -> assert false
+  in
+  {content; summary; sensitive; attachments}
 
 let create_create_obj l =
   match List.Assoc.get_exn ~eq:String.equal "object" l with
@@ -119,12 +156,22 @@ let view_item {typ; published = (t, tz)} =
     else
       table ~a:[a_style "border: 1px solid black;"] acc
   in
+  let print_attachment attachment =
+    let a_title = function
+      | Some name -> [a_title name]
+      | None -> []
+    in
+    match attachment with
+    | Image (url, name) -> img ~src:url ~alt:"/!\\ something went wrong... /!\\" ~a:(a_width 450::a_title name) ()
+    | Video (url, name) -> video ~src:url ~a:(a_controls ()::a_title name) []
+  in
   match typ with
-  | Create {content; summary; sensitive} ->
+  | Create {content; summary; sensitive; attachments} ->
       div [
         pcdata (Format.sprintf "Tooted at %a:" print_time t);
         print_metadata ~sensitive ~summary;
-        Unsafe.data content
+        Unsafe.data content;
+        div (List.map print_attachment attachments);
       ]
   | Announce {url} ->
       div [
