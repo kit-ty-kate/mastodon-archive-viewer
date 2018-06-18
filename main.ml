@@ -9,7 +9,7 @@ type create_obj = {
   summary : string option;
   sensitive : bool;
   attachments : attachment list;
-  (* TODO: Use inReplyToAtomUri *)
+  in_reply_to : url option;
   (* TODO: Detect toot privacy *)
 }
 
@@ -74,7 +74,13 @@ let create_create_obj l =
     | `A l -> List.map get_attachment l
     | _ -> assert false
   in
-  {content; summary; sensitive; attachments}
+  let in_reply_to =
+    match List.Assoc.get_exn ~eq:String.equal "inReplyToAtomUri" l with
+    | `String s -> Some s
+    | `Null -> None
+    | _ -> assert false
+  in
+  {content; summary; sensitive; attachments; in_reply_to}
 
 let create_create_obj l =
   match List.Assoc.get_exn ~eq:String.equal "object" l with
@@ -149,8 +155,13 @@ let view_item {typ; published = (t, tz)} =
     | None when sensitive -> tr [td [b [pcdata "Sensitive media"]]] :: acc
     | None -> acc
   in
-  let print_metadata ~sensitive ~summary =
+  let print_in_reply_to acc = function
+    | Some url -> tr [td [b [pcdata "In reply to: "]; a ~a:[a_href url] [pcdata url]]] :: acc
+    | None -> acc
+  in
+  let print_metadata ~sensitive ~summary ~in_reply_to =
     let acc = print_summary [] ~sensitive summary in
+    let acc = print_in_reply_to acc in_reply_to in
     if List.is_empty acc then
       div []
     else
@@ -166,10 +177,10 @@ let view_item {typ; published = (t, tz)} =
     | Video (url, name) -> video ~src:url ~a:(a_controls ()::a_title name) []
   in
   match typ with
-  | Create {content; summary; sensitive; attachments} ->
+  | Create {content; summary; sensitive; attachments; in_reply_to} ->
       div [
         pcdata (Format.sprintf "Tooted at %a:" print_time t);
-        print_metadata ~sensitive ~summary;
+        print_metadata ~sensitive ~summary ~in_reply_to;
         Unsafe.data content;
         div (List.map print_attachment attachments);
       ]
