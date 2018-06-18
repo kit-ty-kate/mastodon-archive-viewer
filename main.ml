@@ -150,22 +150,21 @@ let parse = function
 let view_item {typ; published = (t, tz)} =
   let open Tyxml.Html in
   let print_time = Ptime.pp_human ?tz_offset_s:tz () in
-  let print_summary acc ~sensitive = function
-    | Some summary -> tr [td [b [pcdata "CW: "; pcdata summary]]] :: acc
-    | None when sensitive -> tr [td [b [pcdata "Sensitive media"]]] :: acc
-    | None -> acc
+  let print_summary ~sensitive = function
+    | Some summary -> [tr [td [b [pcdata "CW: "]; pcdata summary]]]
+    | None when sensitive -> [tr [td [b [pcdata "Sensitive media"]]]]
+    | None -> []
   in
-  let print_in_reply_to acc = function
-    | Some url -> tr [td [b [pcdata "In reply to: "]; a ~a:[a_href url] [pcdata url]]] :: acc
-    | None -> acc
+  let print_in_reply_to = function
+    | Some url -> [tr [td [b [pcdata "In reply to "]; a ~a:[a_href url] [pcdata url]]]]
+    | None -> []
   in
   let print_metadata ~sensitive ~summary ~in_reply_to =
-    let acc = print_summary [] ~sensitive summary in
-    let acc = print_in_reply_to acc in_reply_to in
-    if List.is_empty acc then
-      div []
-    else
-      table ~a:[a_style "border: 1px solid black;"] acc
+    table ~a:[a_style "border: 1px solid black; margin-top: 5px;"] (
+      tr [td [b [pcdata "Tooted at "]; pcdata (Format.sprintf "%a" print_time t)]] ::
+      print_summary ~sensitive summary @
+      print_in_reply_to in_reply_to
+    )
   in
   let print_attachment attachment =
     let a_title = function
@@ -179,14 +178,14 @@ let view_item {typ; published = (t, tz)} =
   match typ with
   | Create {content; summary; sensitive; attachments; in_reply_to} ->
       div [
-        pcdata (Format.sprintf "Tooted at %a:" print_time t);
         print_metadata ~sensitive ~summary ~in_reply_to;
         Unsafe.data content;
         div (List.map print_attachment attachments);
       ]
   | Announce {url} ->
       div [
-        pcdata (Format.sprintf "Boosted at %a: " print_time t);
+        b [pcdata "Boosted at "];
+        pcdata (Format.sprintf "%a: " print_time t);
         a ~a:[a_href url] [pcdata url]
       ]
 
