@@ -107,6 +107,7 @@ let create_old_announce_obj l objectId =
 let create_announce_obj l s =
   match String.split_on_char ':' s with
   | ["tag"; _; objectId; _] -> {url = create_old_announce_obj l objectId}
+  | ["urn"; "X-dfrn"; host; _; id] -> {url = Printf.sprintf "http://%s/display/%s" host id} (* NOTE: Friendica posts. Fourth field seems to be protocol version but doesn't seems to be relevant here *)
   | "http"::_ | "https"::_ -> {url = s}
   | _ -> Printf.eprintf "Can't detect announce object format: %s\n" s; assert false
 
