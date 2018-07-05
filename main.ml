@@ -29,14 +29,24 @@ type item = {
 
 type filters =
   | Boosts
+  | Media
+  | Text_posts
+  | Replies
 
 let filter_eq x y = match x, y with
-  | Boosts, Boosts -> true
+  | Boosts, Boosts
+  | Media, Media
+  | Text_posts, Text_posts
+  | Replies, Replies -> true
+  | (Boosts | Media | Text_posts | Replies), _ -> false
 
-let all_filters = "boosts"
+let all_filters = "boosts, media, text-posts and replies"
 
 let parse_filter = function
   | "boosts" -> Boosts
+  | "media" -> Media
+  | "text-posts" -> Text_posts
+  | "replies" -> Replies
   | filter -> Printf.eprintf "Filter '%s' non-recognised. Only %s are accepted.\n" filter all_filters; assert false
 
 let get_attachment mime l =
@@ -65,7 +75,7 @@ let get_attachment = function
   | `O l -> get_attachment l
   | _ -> assert false
 
-let create_create_obj l =
+let create_create_obj filters l =
   let content =
     match List.Assoc.get_exn ~eq:String.equal "content" l with
     | `String s -> s
@@ -98,11 +108,18 @@ let create_create_obj l =
     | `String s -> s
     | _ -> assert false
   in
-  {content; summary; sensitive; attachments; in_reply_to; original_url}
+  if List.mem ~eq:filter_eq Media filters && not (List.is_empty attachments) then
+    None
+  else if List.mem ~eq:filter_eq Text_posts filters && List.is_empty attachments then
+    None
+  else if List.mem ~eq:filter_eq Replies filters && Option.is_some in_reply_to then
+    None
+  else
+    Some {content; summary; sensitive; attachments; in_reply_to; original_url}
 
-let create_create_obj l =
+let create_create_obj filters l =
   match List.Assoc.get_exn ~eq:String.equal "object" l with
-  | `O l -> create_create_obj l
+  | `O l -> create_create_obj filters l
   | _ -> assert false
 
 let get_first_cc l =
@@ -140,24 +157,22 @@ let parse_time s =
   | Error _ -> assert false
 
 let create_item filters l =
+  let open Option.Infix in
   let typ =
     match List.Assoc.get_exn ~eq:String.equal "type" l with
-    | `String "Create" -> Some (Create (create_create_obj l))
+    | `String "Create" -> create_create_obj filters l >|= fun obj -> Create obj
     | `String "Announce" when List.mem ~eq:filter_eq Boosts filters -> None
     | `String "Announce" -> Some (Announce (create_announce_obj l))
     | `String _ -> assert false
     | _ -> assert false
   in
-  match typ with
-  | Some typ ->
-      let published =
-        match List.Assoc.get_exn ~eq:String.equal "published" l with
-        | `String s -> parse_time s
-        | _ -> assert false
-      in
-      Some {typ; published}
-  | None ->
-      None
+  typ >|= fun typ ->
+  let published =
+    match List.Assoc.get_exn ~eq:String.equal "published" l with
+    | `String s -> parse_time s
+    | _ -> assert false
+  in
+  {typ; published}
 
 let parse_item filters = function
   | `O l -> create_item filters l
