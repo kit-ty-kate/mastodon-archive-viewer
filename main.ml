@@ -27,6 +27,18 @@ type item = {
   published : (Ptime.t * Ptime.tz_offset_s option);
 }
 
+type filters =
+  | Boosts
+
+let filter_eq x y = match x, y with
+  | Boosts, Boosts -> true
+
+let all_filters = "boosts"
+
+let parse_filter = function
+  | "boosts" -> Boosts
+  | filter -> Printf.eprintf "Filter '%s' non-recognised. Only %s are accepted.\n" filter all_filters; assert false
+
 let get_attachment mime l =
   let url =
     match List.Assoc.get_exn ~eq:String.equal "url" l with
@@ -127,12 +139,12 @@ let parse_time s =
   | Ok (t, tz, _) -> (t, tz)
   | Error _ -> assert false
 
-let create_item ~skip_boosts l =
+let create_item filters l =
   let typ =
     match List.Assoc.get_exn ~eq:String.equal "type" l with
     | `String "Create" -> Some (Create (create_create_obj l))
-    | `String "Announce" when not skip_boosts -> Some (Announce (create_announce_obj l))
-    | `String "Announce" -> None
+    | `String "Announce" when List.mem ~eq:filter_eq Boosts filters -> None
+    | `String "Announce" -> Some (Announce (create_announce_obj l))
     | `String _ -> assert false
     | _ -> assert false
   in
@@ -147,17 +159,17 @@ let create_item ~skip_boosts l =
   | None ->
       None
 
-let parse_item ~skip_boosts = function
-  | `O l -> create_item ~skip_boosts l
+let parse_item filters = function
+  | `O l -> create_item filters l
   | _ -> assert false
 
-let parse_items ~skip_boosts = function
-  | `A l -> List.filter_map (parse_item ~skip_boosts) l
+let parse_items filters = function
+  | `A l -> List.filter_map (parse_item filters) l
   | _ -> assert false
 
-let parse ~skip_boosts = function
+let parse filters = function
   | `A _ -> assert false
-  | `O l -> parse_items ~skip_boosts (List.Assoc.get_exn ~eq:String.equal "orderedItems" l)
+  | `O l -> parse_items filters (List.Assoc.get_exn ~eq:String.equal "orderedItems" l)
 
 let view_item {typ; published = (t, tz)} =
   let open Tyxml.Html in
@@ -212,8 +224,28 @@ let view items =
   let html = html head (body (sep (List.map view_item items))) in
   Format.printf "%a\n" (pp ()) html
 
-let () =
-  match Sys.argv with
-  | [|_; file|] -> view (parse ~skip_boosts:false (IO.with_in file Ezjsonm.from_channel))
-  | [|_; "--skip-boosts"; file|] -> view (parse ~skip_boosts:true (IO.with_in file Ezjsonm.from_channel))
-  | _ -> assert false
+let main filters file =
+  let filters = List.map parse_filter filters in
+  view (parse filters (IO.with_in file Ezjsonm.from_channel))
+
+let term =
+  let ($) = Cmdliner.Term.($) in
+  let doc_filters =
+    Printf.sprintf
+      "Filters out some categories of elements. Accepted filters are: %s. \
+       This flags can be used sereval times to have several filters."
+      all_filters
+  in
+  Cmdliner.Term.pure main $
+  Cmdliner.Arg.(value & opt_all string [] & info ~doc:doc_filters ["filter-out"]) $
+  Cmdliner.Arg.(required & pos 0 (some file) None & info ~docv:"FILE" [])
+
+let info =
+  Cmdliner.Term.info
+    ~doc:"View your Mastodon archive offline."
+    ~man:[`P "This program takes the outbox.json file contained in mastodon archives \
+              and prints HTML to the standard output."]
+    ~version:Config.version
+    Config.name
+
+let () = Cmdliner.Term.exit (Cmdliner.Term.eval (term, info))

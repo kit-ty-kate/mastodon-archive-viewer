@@ -27,5 +27,6 @@ This might happen on a newly installed Alpine Linux, for instance.
 * Detect toot privacy (which seems kind of hard)
 * Detect gifs vs. videos
 * Testing (I guess I missed some heuristics, help welcome!!)
-* Documentation & cmdliner
+* Documentation
 * A better short name (I don't like "mav" and I'd like to find a better one)
+* Clean code and better errors
