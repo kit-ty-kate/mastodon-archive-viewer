@@ -29,24 +29,29 @@ type item = {
 
 type filters =
   | Boosts
-  | Media
+  | Media_posts
   | Text_posts
-  | Replies
+  | Media_replies
+  | Text_replies
 
 let filter_eq x y = match x, y with
   | Boosts, Boosts
-  | Media, Media
+  | Media_posts, Media_posts
   | Text_posts, Text_posts
-  | Replies, Replies -> true
-  | (Boosts | Media | Text_posts | Replies), _ -> false
+  | Media_replies, Media_replies
+  | Text_replies, Text_replies -> true
+  | (Boosts | Media_posts | Text_posts | Media_replies | Text_replies), _ -> false
 
-let all_filters = "boosts, media, text-posts and replies"
+let all_filters = "boosts, media-posts, text-posts, all-posts, media-replies, text-replies, all-replies"
 
 let parse_filter = function
-  | "boosts" -> Boosts
-  | "media" -> Media
-  | "text-posts" -> Text_posts
-  | "replies" -> Replies
+  | "boosts" -> [Boosts]
+  | "media-posts" -> [Media_posts]
+  | "text-posts" -> [Text_posts]
+  | "all-posts" -> [Media_posts; Text_posts]
+  | "media-replies" -> [Media_replies]
+  | "text-replies" -> [Text_replies]
+  | "all-replies" -> [Media_replies; Text_replies]
   | filter -> Printf.eprintf "Filter '%s' non-recognised. Only %s are accepted.\n" filter all_filters; assert false
 
 let get_attachment mime l =
@@ -108,9 +113,10 @@ let create_create_obj filters l =
     | `String s -> s
     | _ -> assert false
   in
-  if (List.mem ~eq:filter_eq Media filters && not (List.is_empty attachments)) ||
-     (List.mem ~eq:filter_eq Text_posts filters && List.is_empty attachments) ||
-     (List.mem ~eq:filter_eq Replies filters && Option.is_some in_reply_to) then
+  if (List.mem ~eq:filter_eq Media_posts filters && not (List.is_empty attachments) && Option.is_none in_reply_to) ||
+     (List.mem ~eq:filter_eq Text_posts filters && List.is_empty attachments && Option.is_none in_reply_to) ||
+     (List.mem ~eq:filter_eq Media_replies filters && not (List.is_empty attachments) && Option.is_some in_reply_to) ||
+     (List.mem ~eq:filter_eq Text_replies filters && List.is_empty attachments && Option.is_some in_reply_to) then
     None
   else
     Some {content; summary; sensitive; attachments; in_reply_to; original_url}
@@ -238,7 +244,7 @@ let view items =
   Format.printf "%a\n" (pp ()) html
 
 let main filters file =
-  let filters = List.map parse_filter filters in
+  let filters = List.concat (List.map parse_filter filters) in
   view (parse filters (IO.with_in file Ezjsonm.from_channel))
 
 let term =
