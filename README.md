@@ -21,3 +21,11 @@ $ mav outbox.json
 If the installation fails somewhere while building the dependencies, you might miss one of
 these tools on your systems: make, gcc, m4, libc-dev.
 This might happen on a newly installed Alpine Linux, for instance.
+
+## TODO
+
+* Detect toot privacy (which seems kind of hard)
+* Detect gifs vs. videos
+* Testing (I guess I missed some heuristics, help welcome!!)
+* Documentation & cmdliner
+* A better short name (I don't like "mav" and I'd like to find a better one)
