@@ -108,7 +108,7 @@ let create_announce_obj l s =
   match String.split_on_char ':' s with
   | ["tag"; _; objectId; _] -> {url = create_old_announce_obj l objectId}
   | "http"::_ | "https"::_ -> {url = s}
-  | _ -> Printf.eprintf "Can't detect announce object format: %s" s; assert false
+  | _ -> Printf.eprintf "Can't detect announce object format: %s\n" s; assert false
 
 let create_announce_obj l =
   match List.Assoc.get_exn ~eq:String.equal "object" l with
