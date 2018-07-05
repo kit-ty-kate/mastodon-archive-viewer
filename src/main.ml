@@ -108,11 +108,9 @@ let create_create_obj filters l =
     | `String s -> s
     | _ -> assert false
   in
-  if List.mem ~eq:filter_eq Media filters && not (List.is_empty attachments) then
-    None
-  else if List.mem ~eq:filter_eq Text_posts filters && List.is_empty attachments then
-    None
-  else if List.mem ~eq:filter_eq Replies filters && Option.is_some in_reply_to then
+  if (List.mem ~eq:filter_eq Media filters && not (List.is_empty attachments)) ||
+     (List.mem ~eq:filter_eq Text_posts filters && List.is_empty attachments) ||
+     (List.mem ~eq:filter_eq Replies filters && Option.is_some in_reply_to) then
     None
   else
     Some {content; summary; sensitive; attachments; in_reply_to; original_url}
