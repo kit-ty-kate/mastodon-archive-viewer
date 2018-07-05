@@ -10,6 +10,7 @@ type create_obj = {
   sensitive : bool;
   attachments : attachment list;
   in_reply_to : url option;
+  original_url : url;
   (* TODO: Detect toot privacy *)
 }
 
@@ -80,7 +81,12 @@ let create_create_obj l =
     | `Null -> None
     | _ -> assert false
   in
-  {content; summary; sensitive; attachments; in_reply_to}
+  let original_url =
+    match List.Assoc.get_exn ~eq:String.equal "id" l with
+    | `String s -> s
+    | _ -> assert false
+  in
+  {content; summary; sensitive; attachments; in_reply_to; original_url}
 
 let create_create_obj l =
   match List.Assoc.get_exn ~eq:String.equal "object" l with
@@ -165,9 +171,9 @@ let view_item {typ; published = (t, tz)} =
     | Some url -> [tr [td [b [pcdata "In reply to "]; a ~a:[a_href url] [pcdata url]]]]
     | None -> []
   in
-  let print_metadata ~sensitive ~summary ~in_reply_to =
+  let print_metadata ~sensitive ~summary ~in_reply_to ~original_url =
     table ~a:[a_style "border: 1px solid black; margin-top: 5px;"] (
-      tr [td [b [pcdata "Tooted at "]; pcdata (Format.sprintf "%a" print_time t)]] ::
+      tr [td [b [pcdata "Tooted at "]; a ~a:[a_href original_url] [pcdata (Format.sprintf "%a" print_time t)]]] ::
       print_summary ~sensitive summary @
       print_in_reply_to in_reply_to
     )
@@ -182,9 +188,9 @@ let view_item {typ; published = (t, tz)} =
     | Video (url, name) -> video ~src:url ~a:(a_controls ()::a_title name) []
   in
   match typ with
-  | Create {content; summary; sensitive; attachments; in_reply_to} ->
+  | Create {content; summary; sensitive; attachments; in_reply_to; original_url} ->
       div [
-        print_metadata ~sensitive ~summary ~in_reply_to;
+        print_metadata ~sensitive ~summary ~in_reply_to ~original_url;
         Unsafe.data content;
         div (List.map print_attachment attachments);
       ]
