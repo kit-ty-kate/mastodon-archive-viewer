@@ -121,32 +121,37 @@ let parse_time s =
   | Ok (t, tz, _) -> (t, tz)
   | Error _ -> assert false
 
-let create_item l =
+let create_item ~skip_boosts l =
   let typ =
     match List.Assoc.get_exn ~eq:String.equal "type" l with
-    | `String "Create" -> Create (create_create_obj l)
-    | `String "Announce" -> Announce (create_announce_obj l)
+    | `String "Create" -> Some (Create (create_create_obj l))
+    | `String "Announce" when not skip_boosts -> Some (Announce (create_announce_obj l))
+    | `String "Announce" -> None
     | `String _ -> assert false
     | _ -> assert false
   in
-  let published =
-    match List.Assoc.get_exn ~eq:String.equal "published" l with
-    | `String s -> parse_time s
-    | _ -> assert false
-  in
-  {typ; published}
+  match typ with
+  | Some typ ->
+      let published =
+        match List.Assoc.get_exn ~eq:String.equal "published" l with
+        | `String s -> parse_time s
+        | _ -> assert false
+      in
+      Some {typ; published}
+  | None ->
+      None
 
-let parse_item = function
-  | `O l -> create_item l
+let parse_item ~skip_boosts = function
+  | `O l -> create_item ~skip_boosts l
   | _ -> assert false
 
-let parse_items = function
-  | `A l -> List.map parse_item l
+let parse_items ~skip_boosts = function
+  | `A l -> List.filter_map (parse_item ~skip_boosts) l
   | _ -> assert false
 
-let parse = function
+let parse ~skip_boosts = function
   | `A _ -> assert false
-  | `O l -> parse_items (List.Assoc.get_exn ~eq:String.equal "orderedItems" l)
+  | `O l -> parse_items ~skip_boosts (List.Assoc.get_exn ~eq:String.equal "orderedItems" l)
 
 let view_item {typ; published = (t, tz)} =
   let open Tyxml.Html in
@@ -203,5 +208,6 @@ let view items =
 
 let () =
   match Sys.argv with
-  | [|_; file|] -> view (parse (IO.with_in file Ezjsonm.from_channel))
+  | [|_; file|] -> view (parse ~skip_boosts:false (IO.with_in file Ezjsonm.from_channel))
+  | [|_; "--skip-boosts"; file|] -> view (parse ~skip_boosts:true (IO.with_in file Ezjsonm.from_channel))
   | _ -> assert false
