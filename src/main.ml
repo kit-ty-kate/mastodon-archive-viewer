@@ -44,7 +44,7 @@ let filter_eq x y = match x, y with
   | Text_replies, Text_replies -> true
   | (Boosts | Media_posts | Text_posts | Media_replies | Text_replies), _ -> false
 
-let all_filters = "boosts, media-posts, text-posts, all-posts, media-replies, text-replies, all-replies"
+let all_filters = "boosts, media-posts, text-posts, all-posts, media-replies, text-replies, all-replies and all-media"
 
 let parse_filter = function
   | "boosts" -> [Boosts]
@@ -54,6 +54,7 @@ let parse_filter = function
   | "media-replies" -> [Media_replies]
   | "text-replies" -> [Text_replies]
   | "all-replies" -> [Media_replies; Text_replies]
+  | "all-media" -> [Media_posts; Media_replies]
   | filter -> Printf.eprintf "Filter '%s' non-recognised. Only %s are accepted.\n" filter all_filters; assert false
 
 let get_attachment mime l =
