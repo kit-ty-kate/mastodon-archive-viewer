@@ -1,3 +1,5 @@
+module Items = Map.Make (String)
+
 type url = string
 
 type attachment =
@@ -80,7 +82,20 @@ let get_attachment = function
   | `O l -> get_attachment l
   | _ -> assert false
 
-let create_create_obj filters l =
+let get_in_reply_to l =
+  match List.Assoc.get_exn ~eq:String.equal "inReplyToAtomUri" l with
+  | `String s -> Some s
+  | `Null -> None
+  | _ -> assert false
+
+let rec is_self_reply_rec m = function
+  | None -> true
+  | Some url ->
+      match Items.find_opt url m with
+      | Some l -> is_self_reply_rec m (get_in_reply_to l)
+      | None -> false
+
+let create_create_obj filters m l =
   let content =
     match List.Assoc.get_exn ~eq:String.equal "content" l with
     | `String s -> s
@@ -102,28 +117,24 @@ let create_create_obj filters l =
     | `A l -> List.map get_attachment l
     | _ -> assert false
   in
-  let in_reply_to =
-    match List.Assoc.get_exn ~eq:String.equal "inReplyToAtomUri" l with
-    | `String s -> Some s
-    | `Null -> None
-    | _ -> assert false
-  in
   let original_url =
-    match List.Assoc.get_exn ~eq:String.equal "id" l with
+    match List.Assoc.get_exn ~eq:String.equal "atomUri" l with
     | `String s -> s
     | _ -> assert false
   in
-  if (List.mem ~eq:filter_eq Media_posts filters && not (List.is_empty attachments) && Option.is_none in_reply_to) ||
-     (List.mem ~eq:filter_eq Text_posts filters && List.is_empty attachments && Option.is_none in_reply_to) ||
-     (List.mem ~eq:filter_eq Media_replies filters && not (List.is_empty attachments) && Option.is_some in_reply_to) ||
-     (List.mem ~eq:filter_eq Text_replies filters && List.is_empty attachments && Option.is_some in_reply_to) then
+  let in_reply_to = get_in_reply_to l in
+  let is_reply = not (is_self_reply_rec m in_reply_to) in
+  if (List.mem ~eq:filter_eq Media_posts filters && not (List.is_empty attachments) && not is_reply) ||
+     (List.mem ~eq:filter_eq Text_posts filters && List.is_empty attachments && not is_reply) ||
+     (List.mem ~eq:filter_eq Media_replies filters && not (List.is_empty attachments) && is_reply) ||
+     (List.mem ~eq:filter_eq Text_replies filters && List.is_empty attachments && is_reply) then
     None
   else
     Some {content; summary; sensitive; attachments; in_reply_to; original_url}
 
-let create_create_obj filters l =
+let create_create_obj filters m l =
   match List.Assoc.get_exn ~eq:String.equal "object" l with
-  | `O l -> create_create_obj filters l
+  | `O l -> create_create_obj filters m l
   | _ -> assert false
 
 let get_first_cc l =
@@ -160,11 +171,11 @@ let parse_time s =
   | Ok (t, tz, _) -> (t, tz)
   | Error _ -> assert false
 
-let create_item filters l =
+let create_item filters m l =
   let open Option.Infix in
   let typ =
     match List.Assoc.get_exn ~eq:String.equal "type" l with
-    | `String "Create" -> create_create_obj filters l >|= fun obj -> Create obj
+    | `String "Create" -> create_create_obj filters m l >|= fun obj -> Create obj
     | `String "Announce" when List.mem ~eq:filter_eq Boosts filters -> None
     | `String "Announce" -> Some (Announce (create_announce_obj l))
     | `String _ -> assert false
@@ -178,12 +189,36 @@ let create_item filters l =
   in
   {typ; published}
 
-let parse_item filters = function
-  | `O l -> create_item filters l
+let parse_item filters m = function
+  | `O l -> create_item filters m l
   | _ -> assert false
 
+let get_id l =
+  match List.Assoc.get_exn ~eq:String.equal "id" l with
+  | `String id -> id
+  | _ -> assert false
+
+let toots_map l =
+  let aux m = function
+    | `O l ->
+        begin match List.Assoc.get_exn ~eq:String.equal "type" l with
+        | `String "Create" ->
+            begin match List.Assoc.get_exn ~eq:String.equal "object" l with
+            | `O l ->
+                begin match List.Assoc.get_exn ~eq:String.equal "atomUri" l with
+                | `String id -> Items.add id l m
+                | _ -> m
+                end
+            | _ -> m
+            end
+        | _ -> m
+        end
+    | _ -> m
+  in
+  List.fold_left aux Items.empty l
+
 let parse_items filters = function
-  | `A l -> List.filter_map (parse_item filters) l
+  | `A l -> List.filter_map (parse_item filters (toots_map l)) l
   | _ -> assert false
 
 let parse filters = function
