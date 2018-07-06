@@ -16,6 +16,9 @@ $ cd <the archive directory>
 $ mav outbox.json
 ```
 
+The mastodon-archive-viewer tool has also some options to filter out some items for example. Check out
+the available options with `mav --help`
+
 ## Troubleshootings
 
 If the installation fails somewhere while building the dependencies, you might miss one of
