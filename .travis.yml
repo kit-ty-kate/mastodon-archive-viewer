@@ -8,9 +8,6 @@ env:
   - PINS="mav:."
   - DISTRO="debian-stable"
   matrix:
-  - PACKAGE="mav" OCAML_VERSION="3.12.1" DEPOPTS="ffmpeg"
-  - PACKAGE="mav" OCAML_VERSION="4.00.1" DEPOPTS="ffmpeg"
-  - PACKAGE="mav" OCAML_VERSION="4.01.0" DEPOPTS="ffmpeg"
   - PACKAGE="mav" OCAML_VERSION="4.02.3" DEPOPTS="ffmpeg"
   - PACKAGE="mav" OCAML_VERSION="4.03.0" DEPOPTS="ffmpeg"
   - PACKAGE="mav" OCAML_VERSION="4.04.2" DEPOPTS="ffmpeg"
