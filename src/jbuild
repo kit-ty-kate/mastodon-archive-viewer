@@ -9,9 +9,6 @@
     ezjsonm
     ptime
     tyxml
-    (select gif_detect.ml from
-     (ffmpeg -> gif_detect_ffmpeg.ml)
-     (-> gif_detect_dummy.ml))
     cmdliner))))
 
 (rule
