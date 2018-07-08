@@ -8,8 +8,9 @@ type attachment =
 
 type privacy =
   | Public
+  | Unlisted
+  | Followers_only
   | DM
-  | Unknown
 
 type create_obj = {
   content : string;
@@ -131,18 +132,30 @@ let create_create_obj filters m l =
   let privacy =
     match List.Assoc.get_exn ~eq:String.equal "cc" l with
     | `A [] -> DM
-    | `A _ ->
+    | `A cc ->
         begin match List.Assoc.get_exn ~eq:String.equal "to" l with
-        | `A l ->
+        | `A to_list ->
             let get_string = function
               | `String s -> s
               | _ -> assert false
             in
-            let l = List.map get_string l in
-            if List.mem ~eq:String.equal "https://www.w3.org/ns/activitystreams#Public" l then
+            let to_list = List.map get_string to_list in
+            let cc = List.map get_string cc in
+            let public_feed = "https://www.w3.org/ns/activitystreams#Public" in
+            if List.mem ~eq:String.equal public_feed to_list then
               Public
+            else if List.mem ~eq:String.equal public_feed cc then
+              Unlisted
             else
-              Unknown
+              let followers =
+                match List.Assoc.get_exn ~eq:String.equal "attributedTo" l with
+                | `String s -> s ^ "/followers"
+                | _ -> assert false
+              in
+              if List.mem ~eq:String.equal followers to_list then
+                Followers_only
+              else
+                assert false
         | _ -> assert false
         end
     | _ -> assert false
@@ -264,8 +277,9 @@ let view_item {typ; published = (t, tz)} =
   in
   let print_privacy = function
     | Public -> pcdata "Public"
+    | Unlisted -> pcdata "Unlisted"
+    | Followers_only -> pcdata "Followers only"
     | DM -> pcdata "Direct Message"
-    | Unknown -> pcdata "Unknown"
   in
   let print_metadata ~sensitive ~summary ~in_reply_to ~original_url ~privacy =
     table ~a:[a_style "border: 1px solid black; margin-top: 5px;"] (
