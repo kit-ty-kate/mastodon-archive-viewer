@@ -7,6 +7,7 @@ type attachment =
   | Image of (url * string option)
 
 type privacy =
+  | Public
   | DM
   | Unknown
 
@@ -130,7 +131,21 @@ let create_create_obj filters m l =
   let privacy =
     match List.Assoc.get_exn ~eq:String.equal "cc" l with
     | `A [] -> DM
-    | _ -> Unknown
+    | `A _ ->
+        begin match List.Assoc.get_exn ~eq:String.equal "to" l with
+        | `A l ->
+            let get_string = function
+              | `String s -> s
+              | _ -> assert false
+            in
+            let l = List.map get_string l in
+            if List.mem ~eq:String.equal "https://www.w3.org/ns/activitystreams#Public" l then
+              Public
+            else
+              Unknown
+        | _ -> assert false
+        end
+    | _ -> assert false
   in
   let in_reply_to = get_in_reply_to l in
   let is_reply = not (is_self_reply_rec m in_reply_to) in
@@ -248,6 +263,7 @@ let view_item {typ; published = (t, tz)} =
     | None -> []
   in
   let print_privacy = function
+    | Public -> pcdata "Public"
     | DM -> pcdata "Direct Message"
     | Unknown -> pcdata "Unknown"
   in
