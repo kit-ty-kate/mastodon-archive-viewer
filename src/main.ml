@@ -130,35 +130,36 @@ let create_create_obj filters m l =
     | _ -> assert false
   in
   let privacy =
-    match List.Assoc.get_exn ~eq:String.equal "cc" l with
-    | `A [] -> DM
-    | `A cc ->
-        begin match List.Assoc.get_exn ~eq:String.equal "to" l with
-        | `A to_list ->
-            let get_string = function
-              | `String s -> s
-              | _ -> assert false
-            in
-            let to_list = List.map get_string to_list in
-            let cc = List.map get_string cc in
-            let public_feed = "https://www.w3.org/ns/activitystreams#Public" in
-            if List.mem ~eq:String.equal public_feed to_list then
-              Public
-            else if List.mem ~eq:String.equal public_feed cc then
-              Unlisted
-            else
-              let followers =
-                match List.Assoc.get_exn ~eq:String.equal "attributedTo" l with
-                | `String s -> s ^ "/followers"
-                | _ -> assert false
-              in
-              if List.mem ~eq:String.equal followers to_list then
-                Followers_only
-              else
-                assert false
-        | _ -> assert false
-        end
-    | _ -> assert false
+    let get_string = function
+      | `String s -> s
+      | _ -> assert false
+    in
+    let to_list =
+      match List.Assoc.get_exn ~eq:String.equal "to" l with
+      | `A l -> List.map get_string l
+      | _ -> assert false
+    in
+    let cc =
+      match List.Assoc.get_exn ~eq:String.equal "cc" l with
+      | `A l -> List.map get_string l
+      | _ -> assert false
+    in
+    let followers =
+      match List.Assoc.get_exn ~eq:String.equal "attributedTo" l with
+      | `String s -> s ^ "/followers"
+      | _ -> assert false
+    in
+    let public_feed = "https://www.w3.org/ns/activitystreams#Public" in
+    if List.mem ~eq:String.equal public_feed to_list then
+      Public
+    else if List.mem ~eq:String.equal public_feed cc then
+      Unlisted
+    else if List.mem ~eq:String.equal followers to_list then
+      Followers_only
+    else if List.is_empty cc then
+      DM
+    else
+      assert false
   in
   let in_reply_to = get_in_reply_to l in
   let is_reply = not (is_self_reply_rec m in_reply_to) in
