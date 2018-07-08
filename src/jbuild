@@ -2,7 +2,7 @@
 
 (executable
  ((name main)
-  (public_name mav)
+  (public_name mastodon-archive-viewer)
   (flags (:standard -safe-string -w A-44-33-4 -open Containers))
   (libraries
    (containers
@@ -17,5 +17,5 @@
 (rule
   (with-stdout-to config.ml
     (progn
-      (echo "let name = {|mav|}\n")
-      (echo "let version = {|${version:mav}|}\n"))))
+      (echo "let name = {|mastodon-archive-viewer|}\n")
+      (echo "let version = {|${version:mastodon-archive-viewer}|}\n"))))

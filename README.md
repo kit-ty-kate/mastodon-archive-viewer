@@ -4,7 +4,7 @@ First you need an initialized OPAM installed
 If you don't have it installed, it can be fetched from your system packages manager.
 Then to initialize it, do `opam init -a`, then `eval $(opam config env)`
 
-Now, to install mastodon-archive-viewer, do `opam pin add mav .`
+Now, to install mastodon-archive-viewer, do `opam pin add mastodon-archive-viewer .`
 
 ## How to use mastodon-archive-viewer
 
@@ -13,11 +13,11 @@ to view, extract it in a new directory, then do:
 
 ```
 $ cd <the archive directory>
-$ mav outbox.json
+$ mastodon-archive-viewer outbox.json
 ```
 
 The mastodon-archive-viewer tool has also some options to filter out some items for example. Check out
-the available options with `mav --help`
+the available options with `mastodon-archive-viewer --help`
 
 ## Hidden feature
 
@@ -39,5 +39,4 @@ This might happen on a newly installed Alpine Linux, for instance.
 
 * Testing (I guess I missed some heuristics, help welcome!!)
 * Documentation
-* A better short name (I don't like "mav" and I'd like to find a better one)
 * Clean code and better errors
