@@ -152,11 +152,12 @@ let create_create_obj filters m l =
     let public_feed = "https://www.w3.org/ns/activitystreams#Public" in
     if List.mem ~eq:String.equal public_feed to_list then
       Public
-    else if List.mem ~eq:String.equal public_feed cc then
-      Unlisted
-    else if List.mem ~eq:String.equal followers to_list then
-      Followers_only
-    else if List.is_empty cc then
+    else if List.mem ~eq:String.equal followers to_list then begin
+      if List.mem ~eq:String.equal public_feed cc then
+        Unlisted
+      else
+        Followers_only
+    end else if List.is_empty cc then
       DM
     else
       assert false
