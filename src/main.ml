@@ -6,6 +6,10 @@ type attachment =
   | Video of (url * string option)
   | Image of (url * string option)
 
+type privacy =
+  | DM
+  | Unknown
+
 type create_obj = {
   content : string;
   summary : string option;
@@ -13,7 +17,7 @@ type create_obj = {
   attachments : attachment list;
   in_reply_to : url option;
   original_url : url;
-  (* TODO: Detect toot privacy *)
+  privacy : privacy;
 }
 
 type announce_obj = {
@@ -123,6 +127,11 @@ let create_create_obj filters m l =
     | `String s -> s
     | _ -> assert false
   in
+  let privacy =
+    match List.Assoc.get_exn ~eq:String.equal "cc" l with
+    | `A [] -> DM
+    | _ -> Unknown
+  in
   let in_reply_to = get_in_reply_to l in
   let is_reply = not (is_self_reply_rec m in_reply_to) in
   if (List.mem ~eq:filter_eq Media_posts filters && not (List.is_empty attachments) && not is_reply) ||
@@ -131,7 +140,7 @@ let create_create_obj filters m l =
      (List.mem ~eq:filter_eq Text_replies filters && List.is_empty attachments && is_reply) then
     None
   else
-    Some {content; summary; sensitive; attachments; in_reply_to; original_url}
+    Some {content; summary; sensitive; attachments; in_reply_to; original_url; privacy}
 
 let create_create_obj filters m l =
   match List.Assoc.get_exn ~eq:String.equal "object" l with
@@ -238,9 +247,14 @@ let view_item {typ; published = (t, tz)} =
     | Some url -> [tr [td [b [pcdata "In reply to "]; a ~a:[a_href url] [pcdata url]]]]
     | None -> []
   in
-  let print_metadata ~sensitive ~summary ~in_reply_to ~original_url =
+  let print_privacy = function
+    | DM -> pcdata "Direct Message"
+    | Unknown -> pcdata "Unknown"
+  in
+  let print_metadata ~sensitive ~summary ~in_reply_to ~original_url ~privacy =
     table ~a:[a_style "border: 1px solid black; margin-top: 5px;"] (
       tr [td [b [pcdata "Tooted at "]; a ~a:[a_href original_url] [pcdata (Format.sprintf "%a" print_time t)]]] ::
+      tr [td [b [pcdata "Privacy: "]; print_privacy privacy]] ::
       print_summary ~sensitive summary @
       print_in_reply_to in_reply_to
     )
@@ -256,9 +270,9 @@ let view_item {typ; published = (t, tz)} =
     | Video (url, name) -> video ~src:url ~a:(a_controls ()::a_title name) []
   in
   match typ with
-  | Create {content; summary; sensitive; attachments; in_reply_to; original_url} ->
+  | Create {content; summary; sensitive; attachments; in_reply_to; original_url; privacy} ->
       div [
-        print_metadata ~sensitive ~summary ~in_reply_to ~original_url;
+        print_metadata ~sensitive ~summary ~in_reply_to ~original_url ~privacy;
         Unsafe.data content;
         div (List.map print_attachment attachments);
       ]
