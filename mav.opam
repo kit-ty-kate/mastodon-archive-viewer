@@ -19,4 +19,7 @@ depends: [
 depopts: [
   "ffmpeg"
 ]
+conflicts: [
+  "ffmpeg" {< "0.2"}
+]
 available: [ocaml-version >= "4.02.3"]
