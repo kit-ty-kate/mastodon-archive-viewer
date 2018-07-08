@@ -5,11 +5,11 @@ services:
 - docker
 env:
   global:
-  - PINS="mastodon-archive-viewer:."
+  - PINS="mastodon-archive-viewer:. ffmpeg:git://github.com/kit-ty-kate/ocaml-ffmpeg.git"
   - DISTRO="debian-stable"
   matrix:
-  - PACKAGE="mastodon-archive-viewer" OCAML_VERSION="4.02.3"
-  - PACKAGE="mastodon-archive-viewer" OCAML_VERSION="4.03.0"
-  - PACKAGE="mastodon-archive-viewer" OCAML_VERSION="4.04.2"
-  - PACKAGE="mastodon-archive-viewer" OCAML_VERSION="4.05.0"
-  - PACKAGE="mastodon-archive-viewer" OCAML_VERSION="4.06.0"
+  - PACKAGE="mastodon-archive-viewer" OCAML_VERSION="4.02.3" DEPOPTS="ffmpeg"
+  - PACKAGE="mastodon-archive-viewer" OCAML_VERSION="4.03.0" DEPOPTS="ffmpeg"
+  - PACKAGE="mastodon-archive-viewer" OCAML_VERSION="4.04.2" DEPOPTS="ffmpeg"
+  - PACKAGE="mastodon-archive-viewer" OCAML_VERSION="4.05.0" DEPOPTS="ffmpeg"
+  - PACKAGE="mastodon-archive-viewer" OCAML_VERSION="4.06.0" DEPOPTS="ffmpeg"

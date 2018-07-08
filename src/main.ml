@@ -298,6 +298,7 @@ let view_item {typ; published = (t, tz)} =
     in
     match attachment with
     | Image (url, name) -> img ~src:url ~alt:"/!\\ something went wrong... /!\\" ~a:(a_width 450::a_title name) ()
+    | Video (url, name) when Gif_detect.is_gif url -> video ~src:url ~a:(a_loop ()::a_autoplay ()::a_title name) []
     | Video (url, name) -> video ~src:url ~a:(a_controls ()::a_title name) []
   in
   match typ with
