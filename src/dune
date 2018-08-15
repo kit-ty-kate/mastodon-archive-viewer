@@ -1,21 +1,19 @@
-(jbuild_version 1)
-
 (executable
- ((name main)
+  (name main)
   (public_name mastodon-archive-viewer)
-  (flags (:standard -safe-string -w A-44-33-4 -open Containers))
+  (flags :standard -safe-string -w A-44-33-4 -open Containers)
   (libraries
-   (containers
+    containers
     ezjsonm
     ptime
     tyxml
     (select gif_detect.ml from
      (ffmpeg -> gif_detect_ffmpeg.ml)
      (-> gif_detect_dummy.ml))
-    cmdliner))))
+    cmdliner))
 
 (rule
   (with-stdout-to config.ml
     (progn
       (echo "let name = {|mastodon-archive-viewer|}\n")
-      (echo "let version = {|${version:mastodon-archive-viewer}|}\n"))))
+      (echo "let version = {|%{version:mastodon-archive-viewer}|}\n"))))

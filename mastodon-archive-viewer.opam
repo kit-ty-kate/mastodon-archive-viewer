@@ -7,9 +7,9 @@ homepage: "https://github.com/kit-ty-kate/mastodon-archive-viewer"
 dev-repo: "git://github.com/kit-ty-kate/mastodon-archive-viewer.git"
 bug-reports: "https://github.com/kit-ty-kate/mastodon-archive-viewer/issues"
 tags: ["mastodon" "ActivityPub"]
-build: ["jbuilder" "build" "-p" name "-j" jobs]
+build: ["dune" "build" "-p" name "-j" jobs]
 depends: [
-  "jbuilder" {build}
+  "dune" {build}
   "containers"
   "ezjsonm"
   "ptime"
