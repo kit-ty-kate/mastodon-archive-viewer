@@ -17,4 +17,4 @@ depends: [
   "cmdliner"
   "ffmpeg" {>= "0.2.0"}
 ]
-available: [ocaml-version >= "4.02.3"]
+available: [ocaml-version >= "4.05.0"]
