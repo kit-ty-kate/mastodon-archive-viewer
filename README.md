@@ -19,16 +19,6 @@ $ mastodon-archive-viewer outbox.json
 The mastodon-archive-viewer tool has also some options to filter out some items for example. Check out
 the available options with `mastodon-archive-viewer --help`
 
-## Hidden feature
-
-mastodon-archive-viewer can detect gifs vs. videos and thus display them differently.
-However this feature for now requires the devel version of the ffmpeg OCaml bindings.
-If you want this feature you'll have to install the dev version manually using:
-
-```
-$ opam pin add ffmpeg git://github.com/kit-ty-kate/ocaml-ffmpeg.git
-```
-
 ## Troubleshootings
 
 If the installation fails somewhere while building the dependencies, you might miss one of
