@@ -63,10 +63,14 @@ let parse_filter = function
   | "all-media" -> [Media_posts; Media_replies]
   | filter -> Printf.eprintf "Filter '%s' non-recognised. Only %s are accepted.\n" filter all_filters; assert false
 
+let cwd = Unix.getcwd ()
+
 let get_attachment mime l =
   let url =
+    let (//) = Filename.concat in
     match List.Assoc.get_exn ~eq:String.equal "url" l with
-    | `String s -> s
+    (* NOTE: Since Mastodon 2.6 the files are all located in ./mastodon/public/system *)
+    | `String s -> cwd // "mastodon" // "public" // "system" // s
     | _ -> assert false
   in
   let name =
