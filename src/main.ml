@@ -63,14 +63,24 @@ let parse_filter = function
   | "all-media" -> [Media_posts; Media_replies]
   | filter -> Printf.eprintf "Filter '%s' non-recognised. Only %s are accepted.\n" filter all_filters; assert false
 
-let cwd = Unix.getcwd ()
+let (//) = Filename.concat
+
+let local_file_prefix =
+  let cwd = Unix.getcwd () in
+  let inf_2_6 = cwd // "media_attachments" in
+  let sub_2_6 = cwd // "mastodon" // "public" // "system" in
+  (* NOTE: Since Mastodon 2.6 the files are all located in ./mastodon/public/system *)
+  if Sys.file_exists inf_2_6 then
+    cwd
+  else if Sys.file_exists sub_2_6 then
+    sub_2_6
+  else
+    failwith "Error: Mastodon version used couldn't be detected"
 
 let get_attachment mime l =
   let url =
-    let (//) = Filename.concat in
     match List.Assoc.get_exn ~eq:String.equal "url" l with
-    (* NOTE: Since Mastodon 2.6 the files are all located in ./mastodon/public/system *)
-    | `String s -> cwd // "mastodon" // "public" // "system" // s
+    | `String s -> local_file_prefix // s
     | _ -> assert false
   in
   let name =
