@@ -1,4 +1,4 @@
-opam-version: "1.2"
+opam-version: "2.0"
 version: "0.3"
 license: "MIT"
 maintainer: "Kate <kit.ty.kate@disroot.org>"
@@ -9,6 +9,7 @@ bug-reports: "https://github.com/kit-ty-kate/mastodon-archive-viewer/issues"
 tags: ["mastodon" "ActivityPub"]
 build: ["dune" "build" "-p" name "-j" jobs]
 depends: [
+  "ocaml" {>= "4.05.0"}
   "dune" {build}
   "containers"
   "ezjsonm"
@@ -17,4 +18,4 @@ depends: [
   "cmdliner"
   "ffmpeg" {>= "0.2.0"}
 ]
-available: [ocaml-version >= "4.05.0"]
+synopsis: "View your Mastodon archive offline"
