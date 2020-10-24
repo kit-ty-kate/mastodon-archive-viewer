@@ -283,24 +283,24 @@ let view_item {typ; published = (t, tz)} =
   let open Tyxml.Html in
   let print_time = Ptime.pp_human ?tz_offset_s:tz () in
   let print_summary ~sensitive = function
-    | Some summary -> [tr [td [b [pcdata "CW: "]; pcdata summary]]]
-    | None when sensitive -> [tr [td [b [pcdata "Sensitive media"]]]]
+    | Some summary -> [tr [td [b [txt "CW: "]; txt summary]]]
+    | None when sensitive -> [tr [td [b [txt "Sensitive media"]]]]
     | None -> []
   in
   let print_in_reply_to = function
-    | Some url -> [tr [td [b [pcdata "In reply to "]; a ~a:[a_href url] [pcdata url]]]]
+    | Some url -> [tr [td [b [txt "In reply to "]; a ~a:[a_href url] [txt url]]]]
     | None -> []
   in
   let print_privacy = function
-    | Public -> pcdata "Public"
-    | Unlisted -> pcdata "Unlisted"
-    | Followers_only -> pcdata "Followers only"
-    | DM -> pcdata "Direct Message"
+    | Public -> txt "Public"
+    | Unlisted -> txt "Unlisted"
+    | Followers_only -> txt "Followers only"
+    | DM -> txt "Direct Message"
   in
   let print_metadata ~sensitive ~summary ~in_reply_to ~original_url ~privacy =
     table ~a:[a_style "border: 1px solid black; margin-top: 5px;"] (
-      tr [td [b [pcdata "Tooted at "]; a ~a:[a_href original_url] [pcdata (Format.sprintf "%a" print_time t)]]] ::
-      tr [td [b [pcdata "Privacy: "]; print_privacy privacy]] ::
+      tr [td [b [txt "Tooted at "]; a ~a:[a_href original_url] [txt (Format.sprintf "%a" print_time t)]]] ::
+      tr [td [b [txt "Privacy: "]; print_privacy privacy]] ::
       print_summary ~sensitive summary @
       print_in_reply_to in_reply_to
     )
@@ -324,9 +324,9 @@ let view_item {typ; published = (t, tz)} =
       ]
   | Announce {url} ->
       div [
-        b [pcdata "Boosted at "];
-        pcdata (Format.sprintf "%a: " print_time t);
-        a ~a:[a_href url] [pcdata url]
+        b [txt "Boosted at "];
+        txt (Format.sprintf "%a: " print_time t);
+        a ~a:[a_href url] [txt url]
       ]
 
 let rec sep = function
@@ -336,7 +336,7 @@ let rec sep = function
 let view items =
   let open Tyxml.Html in
   let charset = meta ~a:[a_charset "utf-8"] () in
-  let head = head (title (pcdata "mastodon-archive-viewer")) [charset] in
+  let head = head (title (txt "mastodon-archive-viewer")) [charset] in
   let html = html head (body (sep (List.map view_item items))) in
   Format.printf "%a\n" (pp ()) html
 

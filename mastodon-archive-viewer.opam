@@ -10,11 +10,11 @@ tags: ["mastodon" "ActivityPub"]
 build: ["dune" "build" "-p" name "-j" jobs]
 depends: [
   "ocaml" {>= "4.05.0"}
-  "dune" {build}
+  "dune" {>= "1.0"}
   "containers"
   "ezjsonm"
   "ptime"
-  "tyxml"
+  "tyxml" {>= "4.3.0"}
   "cmdliner"
   "ffmpeg" {>= "0.2.0"}
 ]
