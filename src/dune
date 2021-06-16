@@ -7,7 +7,7 @@
     ezjsonm
     ptime
     tyxml
-    ffmpeg
+    ffmpeg-av
     cmdliner))
 
 (rule
