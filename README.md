@@ -4,16 +4,20 @@ First you need an initialized OPAM installed
 If you don't have it installed, it can be fetched from your system packages manager.
 Then to initialize it, do `opam init -a`, then `eval $(opam config env)`
 
-Now, to install mastodon-archive-viewer, do `opam pin add mastodon-archive-viewer .`
+Now, to install mastodon-archive-viewer, clone this repo and do:
+
+```sh
+opam pin add mastodon-archive-viewer <the repo directory>
+```
 
 ## How to use mastodon-archive-viewer
 
 Now that mastodon-archive-viewer is installed you just need to download the archive you want
 to view, extract it in a new directory, then do:
 
-```
-$ cd <the archive directory>
-$ mastodon-archive-viewer outbox.json
+```sh
+cd <the archive directory>
+mastodon-archive-viewer outbox.json
 ```
 
 The mastodon-archive-viewer tool has also some options to filter out some items for example. Check out
