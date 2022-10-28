@@ -15,7 +15,7 @@ depends: [
   "ezjsonm"
   "ptime"
   "tyxml" {>= "4.3.0"}
-  "cmdliner"
+  "cmdliner" {>= "1.1.0"}
   "ffmpeg-av" {>= "1.0"}
 ]
 synopsis: "View your Mastodon archive offline"

@@ -352,16 +352,16 @@ let term =
        This flags can be used sereval times to have several filters."
       all_filters
   in
-  Cmdliner.Term.pure main $
+  Cmdliner.Term.const main $
   Cmdliner.Arg.(value & opt_all string [] & info ~doc:doc_filters ["filter-out"]) $
   Cmdliner.Arg.(required & pos 0 (some file) None & info ~docv:"FILE" [])
 
 let info =
-  Cmdliner.Term.info
+  Cmdliner.Cmd.info
     ~doc:"View your Mastodon archive offline."
     ~man:[`P "This program takes the outbox.json file contained in mastodon archives \
               and prints HTML to the standard output."]
     ~version:Config.version
     Config.name
 
-let () = Cmdliner.Term.exit (Cmdliner.Term.eval (term, info))
+let () = exit (Cmdliner.Cmd.eval (Cmdliner.Cmd.v info term))
