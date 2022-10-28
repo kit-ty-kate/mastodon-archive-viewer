@@ -9,11 +9,11 @@ bug-reports: "https://github.com/kit-ty-kate/mastodon-archive-viewer/issues"
 tags: ["mastodon" "ActivityPub"]
 build: ["dune" "build" "-p" name "-j" jobs]
 depends: [
-  "ocaml" {>= "4.05.0"}
+  "ocaml" {>= "4.08.0"}
   "dune" {>= "3.1"}
-  "containers"
-  "ezjsonm"
-  "ptime"
+  "containers" {>= "3.0"}
+  "ezjsonm" {>= "1.0.0"}
+  "ptime" {>= "1.0.0"}
   "tyxml" {>= "4.3.0"}
   "cmdliner" {>= "1.1.0"}
   "ffmpeg-av" {>= "1.0"}
