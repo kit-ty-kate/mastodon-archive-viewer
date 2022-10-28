@@ -247,11 +247,6 @@ let parse_item filters m = function
   | `O l -> create_item filters m l
   | _ -> assert false
 
-let get_id l =
-  match List.Assoc.get_exn ~eq:String.equal "id" l with
-  | `String id -> id
-  | _ -> assert false
-
 let toots_map l =
   let aux m = function
     | `O l ->
